@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>猜猜有什么</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #f9c9e9 0%, #f5a9d0 40%, #ffbcd9 100%);
+            font-family: 'Segoe UI', 'Poppins', 'Roboto', 'Helvetica Neue', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(255, 248, 245, 0.96);
+            backdrop-filter: blur(2px);
+            border-radius: 56px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+            overflow: hidden;
+        }
+        .card-content { padding: 2rem 1.8rem 2.2rem; }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(135deg, #E85D9F, #B83B5E);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .sub {
+            text-align: center;
+            color: #b34e71;
+            font-weight: 500;
+            margin-bottom: 1.8rem;
+            border-bottom: 1px dashed #ffbfd3;
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 6px;
+        }
+        .box-list {
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        .box-item {
+            background: #fff5f9;
+            border-radius: 32px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #ffd9e6;
+        }
+        .box-emoji { font-size: 2rem; min-width: 55px; text-align: center; }
+        .box-info { flex: 1; }
+        .box-title { font-weight: 700; font-size: 1.1rem; color: #ad3f61; }
+        .box-desc { font-size: 0.8rem; color: #c2718c; margin-top: 4px; word-break: break-word; }
+        .box-type {
+            font-size: 0.7rem;
+            background: #ffe3ec;
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 50px;
+            margin-top: 6px;
+        }
+        .box-image-preview { font-size: 0.7rem; color: #c2718c; margin-top: 4px; }
+        .delete-btn {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #e0a1ba;
+            padding: 0 6px;
+        }
+        .delete-btn:hover { color: #c44b73; transform: scale(1.1); }
+        .add-form {
+            background: #fff0f5;
+            border-radius: 48px;
+            padding: 18px;
+            margin-top: 10px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .form-row input, .form-row select, .form-row textarea {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 60px;
+            border: 1px solid #ffc0d6;
+            background: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .form-row textarea { border-radius: 28px; resize: vertical; }
+        .btn {
+            background: linear-gradient(95deg, #FF8AB5, #FF5F8E);
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 60px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(229, 89, 124, 0.3);
+        }
+        .btn-small { padding: 8px 16px; font-size: 0.85rem; }
+        .btn-secondary { background: linear-gradient(95deg, #c75c7e, #a84262); }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #ff8ab5;
+            color: #bc4e72;
+            box-shadow: none;
+        }
+        .btn-outline:hover { background: #ffeef4; }
+        .btn:active { transform: scale(0.97); }
+        .link-area {
+            background: #fff0f5;
+            border-radius: 48px;
+            padding: 1rem;
+            margin: 1.5rem 0 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .link-input {
+            flex: 1;
+            background: white;
+            border-radius: 60px;
+            padding: 10px 15px;
+            font-size: 0.7rem;
+            border: 1px solid #ffc0d6;
+            color: #6b3b4b;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .blindbox-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .box {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle at 30% 30%, #FFC0CB, #F080A0);
+            border-radius: 28px;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.2), 0 0 0 8px #fff9f0, 0 0 0 12px #ffbfd3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            animation: idleShake 3s infinite ease;
+        }
+        @keyframes idleShake {
+            0%,100% { transform: rotate(0deg);}
+            2% { transform: rotate(2deg);}
+            4% { transform: rotate(-2deg);}
+            6% { transform: rotate(1deg);}
+        }
+        .box.shake { animation: shakeBox 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+        @keyframes shakeBox {
+            0% { transform: translate(0,0) rotate(0deg);}
+            20% { transform: translate(-6px, 2px) rotate(-3deg);}
+            40% { transform: translate(6px, -2px) rotate(3deg);}
+            60% { transform: translate(-4px, 1px) rotate(-2deg);}
+            100% { transform: translate(0,0) rotate(0);}
+        }
+        .box-content {
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 2rem;
+            text-shadow: 2px 2px 0 #c25a7a;
+        }
+        .remaining-badge {
+            background: #ffecf0;
+            padding: 8px 20px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: #c45177;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        .gift-reveal {
+            background: linear-gradient(145deg, #fff6f9, #fff0f4);
+            border-radius: 48px;
+            padding: 1.8rem;
+            margin: 20px 0;
+            text-align: center;
+            border: 2px solid #ffc0d9;
+            animation: fadePop 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        @keyframes fadePop {
+            0% { opacity: 0; transform: scale(0.9);}
+            100% { opacity: 1; transform: scale(1);}
+        }
+        .gift-title { font-size: 1.8rem; font-weight: 800; color: #b43b61; margin-bottom: 12px; }
+        .gift-desc { font-size: 1.1rem; color: #4f2c3a; margin: 15px 0; white-space: pre-wrap; }
+        .gift-img { max-width: 100%; max-height: 240px; border-radius: 28px; margin-top: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); object-fit: contain; }
+        .complete-message { text-align: center; padding: 30px; background: #fff0f5; border-radius: 48px; }
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        footer { text-align: center; font-size: 0.7rem; color: #cc8aaa; margin-top: 20px; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container" id="appContainer">
+    <div class="card-content">
+        <div id="setupView">
+            <h1> 定制盲盒池</h1>
+            <div class="text-center"><span class="sub">惊喜 / 惩罚 </span></div>
+            <div class="box-list" id="boxListContainer"></div>
+            <div class="add-form">
+                <div class="form-row">
+                    <input type="text" id="newTitle" placeholder="标题，例如：烛光晚餐" maxlength="60">
+                </div>
+                <div class="form-row">
+                    <select id="newType">
+                        <option value="surprise"> 惊喜</option>
+                        <option value="punishment"> 惩罚</option>
+                    </select>
+                    <input type="text" id="newImage" placeholder="图片链接（选填，如 https://...jpg）">
+                </div>
+                <div class="form-row">
+                    <textarea id="newDesc" rows="2" placeholder="详细描述（选填）"></textarea>
+                </div>
+                <div class="form-row">
+                    <button class="btn btn-small" id="addBoxBtn">➕ 添加盲盒</button>
+                </div>
+            </div>
+            <button class="btn" id="generateBtn" style="margin-top: 20px;">✨ 生成盲盒链接 ✨</button>
+            <div id="shareArea" class="hidden">
+                <div class="link-area">
+                    <div class="link-input" id="shareLink">加载中...</div>
+                    <button class="copy-btn" id="copyLinkBtn"> 复制</button>
+                    <button class="qrcode-btn" id="showQrBtn"> 二维码</button>
+                </div>
+                <div id="qrcodeContainer" style="display: flex; justify-content: center; margin: 12px 0;"></div>
+                <button class="btn btn-secondary" id="resetSetupBtn"> 重新编辑</button>
+            </div>
+        </div>
+        <div id="unboxView" class="hidden">
+            <h1> 惊喜盲盒池 </h1>
+            <div class="text-center"><span class="sub">每次随机拆一个，未拆完可继续</span></div>
+            <div id="unboxDynamicArea">
+                <div id="boxUnopened">
+                    <div class="blindbox-area">
+                        <div class="box" id="blindBox"><div class="box-content"><br>?</div></div>
+                        <div class="remaining-badge" id="remainingCount"></div>
+                        <div class="unbox-hint">✨ 点击盒子，随机抽取一个未拆盲盒 ✨</div>
+                    </div>
+                </div>
+                <div id="giftRevealed" class="hidden"></div>
+                <div id="completeView" class="hidden">
+                    <div class="complete-message">
+                         恭喜！所有盲盒已拆完 <br>
+                        <button class="btn btn-outline" id="backToSetupFromComplete"> 返回制作</button>
+                    </div>
+                </div>
+            </div>
+            <div class="reset-link text-center" style="margin-top: 20px;">
+                <button class="btn btn-outline" id="backToSetupBtn">✨ 制作新盲盒</button>
+            </div>
+            <footer>❤️ 每拆一个都会记录，直到全部揭晓 ❤️</footer>
+        </div>
+    </div>
+</div>
+<script>
+    function encodeBoxes(boxes) {
+        try {
+            const json = JSON.stringify(boxes);
+            const uriEnc = encodeURIComponent(json);
+            const b64 = btoa(uriEnc);
+            return b64.split('').reverse().join('');
+        } catch(e) { return ''; }
+    }
+    function decodeBoxes(encoded) {
+        try {
+            const reversed = encoded.split('').reverse().join('');
+            const b64dec = atob(reversed);
+            const json = decodeURIComponent(b64dec);
+            return JSON.parse(json);
+        } catch(e) { return null; }
+    }
+    function buildUrl(encoded) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('data', encoded);
+        url.hash = '';
+        return url.toString();
+    }
+    function getStorageKey(encoded) { return `unboxed_indices_${encoded}`; }
+    function getUnboxedIndices(encoded) {
+        const key = getStorageKey(encoded);
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : [];
+    }
+    function saveUnboxedIndices(encoded, indices) {
+        const key = getStorageKey(encoded);
+        localStorage.setItem(key, JSON.stringify(indices));
+    }
+    let currentBoxes = [];
+    let currentEncoded = "";
+    let currentGiftBoxes = [];
+    let currentUnboxed = [];
+    const setupView = document.getElementById('setupView');
+    const unboxView = document.getElementById('unboxView');
+    const boxListContainer = document.getElementById('boxListContainer');
+    const newTitle = document.getElementById('newTitle');
+    const newType = document.getElementById('newType');
+    const newImage = document.getElementById('newImage');
+    const newDesc = document.getElementById('newDesc');
+    const addBoxBtn = document.getElementById('addBoxBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const shareArea = document.getElementById('shareArea');
+    const shareLinkSpan = document.getElementById('shareLink');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const showQrBtn = document.getElementById('showQrBtn');
+    const qrcodeContainer = document.getElementById('qrcodeContainer');
+    const resetSetupBtn = document.getElementById('resetSetupBtn');
+    const backToSetupBtn = document.getElementById('backToSetupBtn');
+    const backToSetupFromComplete = document.getElementById('backToSetupFromComplete');
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m) { if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
+    function renderBoxList() {
+        if (!boxListContainer) return;
+        if (currentBoxes.length === 0) { boxListContainer.innerHTML = '<div class="text-center" style="padding:20px; color:#b34e71;">✨ 还没有盲盒，点击下方添加 ✨</div>'; return; }
+        let html = '';
+        currentBoxes.forEach((box, idx) => {
+            const typeEmoji = box.type === 'surprise' ? '' : '';
+            const typeText = box.type === 'surprise' ? '惊喜' : '惩罚';
+            html += `<div class="box-item"><div class="box-emoji">${typeEmoji}</div><div class="box-info"><div class="box-title">${escapeHtml(box.title)}</div>${box.desc ? `<div class="box-desc">${escapeHtml(box.desc)}</div>` : ''}${box.image ? `<div class="box-image-preview">️ 有图片</div>` : ''}<div class="box-type">${typeText}</div></div><button class="delete-btn" data-index="${idx}">️</button></div>`;
+        });
+        boxListContainer.innerHTML = html;
+        document.querySelectorAll('.delete-btn').forEach(btn => { btn.addEventListener('click', (e) => { const idx = parseInt(btn.dataset.index); currentBoxes.splice(idx, 1); renderBoxList(); }); });
+    }
+    function addBox() {
+        let title = newTitle.value.trim();
+        if (!title) { alert("请输入盲盒标题~"); return; }
+        const type = newType.value;
+        const image = newImage.value.trim();
+        const desc = newDesc.value.trim();
+        currentBoxes.push({ title: title, type: type, image: image || "", desc: desc || (type === 'surprise' ? '一份惊喜等着你！' : '愿赌服输哦~') });
+        newTitle.value = ''; newImage.value = ''; newDesc.value = '';
+        renderBoxList();
+    }
+    function generateLink() {
+        if (currentBoxes.length === 0) { alert("请至少添加一个盲盒内容！"); return; }
+        const encoded = encodeBoxes(currentBoxes);
+        if (!encoded) { alert("生成失败，请重试"); return; }
+        currentEncoded = encoded;
+        const fullUrl = buildUrl(encoded);
+        shareLinkSpan.innerText = fullUrl;
+        shareArea.classList.remove('hidden');
+        qrcodeContainer.innerHTML = '';
+        const newQrBtn = showQrBtn.cloneNode(true);
+        showQrBtn.parentNode.replaceChild(newQrBtn, showQrBtn);
+        newQrBtn.addEventListener('click', () => generateQRCode(fullUrl));
+        const newCopyBtn = copyLinkBtn.cloneNode(true);
+        copyLinkBtn.parentNode.replaceChild(newCopyBtn, copyLinkBtn);
+        newCopyBtn.addEventListener('click', () => { navigator.clipboard.writeText(fullUrl).then(() => alert("✅ 链接已复制，发给你的公主吧！")); });
+    }
+    function generateQRCode(url) {
+        qrcodeContainer.innerHTML = '';
+        try {
+            const qr = qrcode(0, 'M');
+            qr.addData(url);
+            qr.make();
+            const size = qr.getModuleCount() * 5;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            for (let row = 0; row < qr.getModuleCount(); row++) {
+                for (let col = 0; col < qr.getModuleCount(); col++) {
+                    ctx.fillStyle = qr.isDark(row, col) ? '#B83B5E' : '#FFE4EE';
+                    ctx.fillRect(col * 5, row * 5, 5, 5);
+                }
+            }
+            canvas.style.borderRadius = '16px';
+            qrcodeContainer.appendChild(canvas);
+        } catch(e) { qrcodeContainer.innerHTML = '<span style="color:#b34e71">二维码生成失败，请手动复制链接</span>'; }
+    }
+    function resetEdit() { currentBoxes = []; renderBoxList(); shareArea.classList.add('hidden'); qrcodeContainer.innerHTML = ''; currentEncoded = ''; }
+    function showUnboxMode(encodedParam) {
+        setupView.classList.add('hidden');
+        unboxView.classList.remove('hidden');
+        const boxes = decodeBoxes(encodedParam);
+        if (!boxes || boxes.length === 0) {
+            document.getElementById('boxUnopened').classList.add('hidden');
+            document.getElementById('giftRevealed').classList.add('hidden');
+            document.getElementById('completeView').classList.remove('hidden');
+            document.getElementById('completeView').innerHTML = '<div class="complete-message"> 盲盒无效或已损坏，请重新生成链接<br><button class="btn btn-outline" id="invalidBackBtn">返回制作</button></div>';
+            const invalidBack = document.getElementById('invalidBackBtn');
+            if (invalidBack) invalidBack.onclick = () => showSetupMode();
+            return;
+        }
+        currentGiftBoxes = boxes;
+        const unboxed = getUnboxedIndices(encodedParam);
+        currentUnboxed = unboxed;
+        updateUnboxUI(encodedParam);
+    }
+    function updateUnboxUI(encodedParam) {
+        const total = currentGiftBoxes.length;
+        const unboxedCount = currentUnboxed.length;
+        const remaining = total - unboxedCount;
+        const remainingSpan = document.getElementById('remainingCount');
+        const boxUnopenedDiv = document.getElementById('boxUnopened');
+        const giftRevealedDiv = document.getElementById('giftRevealed');
+        const completeViewDiv = document.getElementById('completeView');
+        if (remaining === 0) {
+            boxUnopenedDiv.classList.add('hidden');
+            giftRevealedDiv.classList.add('hidden');
+            completeViewDiv.classList.remove('hidden');
+            completeViewDiv.innerHTML = `<div class="complete-message"> 恭喜！所有盲盒已拆完 <br><button class="btn btn-outline" id="completeBackBtn"> 返回制作</button></div>`;
+            const backBtn = document.getElementById('completeBackBtn');
+            if (backBtn) backBtn.onclick = () => showSetupMode();
+            return;
+        }
+        completeViewDiv.classList.add('hidden');
+        boxUnopenedDiv.classList.remove('hidden');
+        giftRevealedDiv.classList.add('hidden');
+        remainingSpan.innerText = `✨ 剩余 ${remaining} 个盲盒 ✨`;
+        const blindBox = document.getElementById('blindBox');
+        if (blindBox) {
+            const newBox = blindBox.cloneNode(true);
+            blindBox.parentNode.replaceChild(newBox, blindBox);
+            const finalBox = document.getElementById('blindBox');
+            finalBox.addEventListener('click', () => {
+                if (remaining === 0) return;
+                const unboxedSet = new Set(currentUnboxed);
+                const availableIndices = [];
+                for (let i = 0; i < total; i++) if (!unboxedSet.has(i)) availableIndices.push(i);
+                if (availableIndices.length === 0) return;
+                const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+                const chosenBox = currentGiftBoxes[randomIndex];
+                finalBox.classList.add('shake');
+                canvasConfetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ['#ff9ab3', '#ffc0d0'] });
+                setTimeout(() => {
+                    displayGift(chosenBox);
+                    currentUnboxed.push(randomIndex);
+                    saveUnboxedIndices(encodedParam, currentUnboxed);
+                    boxUnopenedDiv.classList.add('hidden');
+                    giftRevealedDiv.classList.remove('hidden');
+                    finalBox.classList.remove('shake');
+                    const continueBtn = document.createElement('button');
+                    continueBtn.innerText = ' 继续拆下一个 ';
+                    continueBtn.className = 'btn btn-outline';
+                    continueBtn.style.marginTop = '20px';
+                    continueBtn.onclick = () => { const freshUnboxed = getUnboxedIndices(encodedParam); currentUnboxed = freshUnboxed; updateUnboxUI(encodedParam); };
+                    const existingBtn = giftRevealedDiv.querySelector('.continue-btn');
+                    if (existingBtn) existingBtn.remove();
+                    continueBtn.classList.add('continue-btn');
+                    giftRevealedDiv.appendChild(continueBtn);
+                }, 350);
+            });
+        }
+    }
+    function displayGift(box) {
+        const giftRevealedDiv = document.getElementById('giftRevealed');
+        const typeEmoji = box.type === 'surprise' ? '' : '';
+        const typeColor = box.type === 'surprise' ? '#b43b61' : '#9b4b6e';
+        let imageHtml = '';
+        if (box.image && box.image.trim() !== '') {
+            imageHtml = `<img class="gift-img" src="${escapeHtml(box.image)}" alt="礼物图片" onerror="this.onerror=null;this.style.display='none';this.nextSibling?.style?.setProperty('display','block')"><div style="display:none;color:#b45f7a;">✨ 图片加载失败，但爱意不减 ✨</div>`;
+        }
+        const html = `<div class="gift-reveal"><div class="gift-title" style="color:${typeColor}">${typeEmoji} ${escapeHtml(box.title)} ${typeEmoji}</div><div class="gift-desc">${escapeHtml(box.desc)}</div>${imageHtml}<div style="margin-top:10px; font-size:0.9rem; color:#c06f8b;">✨ 已拆开 ✨</div></div>`;
+        giftRevealedDiv.innerHTML = html;
+    }
+    function showSetupMode() {
+        if (window.location.search.includes('data=')) {
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+        setupView.classList.remove('hidden');
+        unboxView.classList.add('hidden');
+        renderBoxList();
+        shareArea.classList.add('hidden');
+        qrcodeContainer.innerHTML = '';
+    }
+    function handleRouting() {
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('data');
+        if (data && data.length > 0) showUnboxMode(data);
+        else showSetupMode();
+    }
+    addBoxBtn.addEventListener('click', addBox);
+    generateBtn.addEventListener('click', generateLink);
+    resetSetupBtn.addEventListener('click', resetEdit);
+    backToSetupBtn.addEventListener('click', showSetupMode);
+    if (backToSetupFromComplete) backToSetupFromComplete.addEventListener('click', showSetupMode);
+    window.addEventListener('popstate', handleRouting);
+    currentBoxes = [];
+    renderBoxList();
+    handleRouting();
+</script>
+</body>
+</html>
